@@ -6,14 +6,14 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class ValueAsKeyData implements Writable {
+public class SortData implements Writable {
     private String category;
     private int quantity;
 
-    public ValueAsKeyData() {
+    public SortData() {
     }
 
-    public ValueAsKeyData(String category, int quantity) {
+    public SortData(String category, int quantity) {
         this.category = category;
         this.quantity = quantity;
     }

@@ -1,12 +1,16 @@
 package com.itmo;
 
 import com.itmo.mapper.SalesMapper;
+import com.itmo.mapper.SortMapper;
 import com.itmo.model.SalesData;
+import com.itmo.model.SortData;
 import com.itmo.reducer.SalesReducer;
+import com.itmo.reducer.SortReducer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -65,8 +69,35 @@ public class App {
             String result = "Reducers: " + reducerCount + " | Time: " + elapsedTimeInSeconds + " seconds\n";
             String resultFileName = generateResultFileName(reducerCount);
             appendMetricsToFile(new Path(resultFileName), result, conf);
+
+            runSortJob(outputDir, conf);
         } else {
             System.err.println("Job failed with " + reducerCount + " reducers.");
+        }
+    }
+
+    private static void runSortJob(String outputDir, Configuration conf) throws Exception {
+        System.out.println("Running Sort Job...");
+
+        Job sortJob = Job.getInstance(conf, JOB_NAME + " - Sorting");
+        sortJob.setJarByClass(App.class);
+        sortJob.setMapperClass(SortMapper.class);
+        sortJob.setReducerClass(SortReducer.class);
+
+        sortJob.setMapOutputKeyClass(DoubleWritable.class);
+        sortJob.setMapOutputValueClass(SortData.class);
+        sortJob.setOutputKeyClass(Text.class);
+        sortJob.setOutputValueClass(Text.class);
+
+        FileInputFormat.addInputPath(sortJob, new Path(outputDir));
+        FileOutputFormat.setOutputPath(sortJob, new Path(outputDir + "-sorted"));
+
+        boolean sortSuccess = sortJob.waitForCompletion(true);
+
+        if (!sortSuccess) {
+            System.err.println("Sort job failed.");
+        } else {
+            System.out.println("Sort job completed successfully.");
         }
     }
 
